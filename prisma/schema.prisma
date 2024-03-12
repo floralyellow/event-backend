@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+model PollsType {
+  id                    Int                     @id @default(autoincrement())
+  type                  String?
+  UserEventVotesInPolls UserEventVotesInPolls[]
+}
+
+model UserEventVotesInPolls {
+  id          Int              @id @default(autoincrement())
+  type        PollsType        @relation(fields: [typeId], references: [id])
+  typeId      Int
+  userEvent   UserEvent        @relation(fields: [UserEventId], references: [id])
+  UserEventId Int
+  EventPoll   EventPollChoices @relation(fields: [EventPollId], references: [id])
+  EventPollId Int
+}
+
+model EventPollChoices {
+  id                    Int                     @id @default(autoincrement())
+  EventPoll             EventPolls              @relation(fields: [EventPollId], references: [id])
+  EventPollId           Int
+  choice                String
+  UserEventVotesInPolls UserEventVotesInPolls[]
+}
+
+model EventPolls {
+  id               Int                @id @default(autoincrement())
+  question         String
+  userEvent        UserEvent          @relation(fields: [UserEventId], references: [id])
+  UserEventId      Int
+  EventPollChoices EventPollChoices[]
+}
+
+model UserEvent {
+  id                      Int                     @id @default(autoincrement())
+  user                    User                    @relation(fields: [userId], references: [id])
+  userId                  Int
+  event                   Event                   @relation(fields: [eventId], references: [id])
+  eventId                 Int
+  EventPolls              EventPolls[]
+  UserEventVotesInPolls   UserEventVotesInPolls[]
+}
+
+model Event {
+  id            Int         @id @default(autoincrement())
+  date          DateTime
+  description   String?
+  place         String?
+  createdBy     User        @relation(fields: [createdUserId], references: [id])
+  createdUserId Int
+  UserEvent     UserEvent[]
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String? @unique
+  username String?
+  password String
+
+  UserEvent UserEvent[]
+  Event     Event[]
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
